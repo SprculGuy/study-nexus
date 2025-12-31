@@ -12,7 +12,7 @@ Brenden Ike in 1995 (Internationally standard for JavaScript language = ECMAScri
             High Level - no need to manage memory with variable definition as c/c++
             garbage collection
             Just in time compiled (compiles and executed immediately)
-            multi paradigm (can be imperative or declarative paradigm) - supports procedural/function/object-oriented paradigm
+            multi paradigm (can be imperative or declarative paradigm) - supports procedural/function/object-oriented(sugar-coated) paradigm
             Synchronous
             Single threaded
             Prototyped based oopl(has no class, object is inherited from another object(prototype object))
@@ -229,7 +229,7 @@ debugger;       // keyword used to add breakpoint for the debugging
         |                                                                 |     // ''||0     returns 0       // returns last Falsey value
         | !															    |	Logical NOT
         |<, <=, >, >=, !=, ==				                            |	Comparisons (does type conversion)
-        |===, !==                                                       |   strict equality operator;  doesn't allows type coercion.eg, 3=='3' is true but 3==='3' is false
+        |===, !==                                                       |   strict equality operator;  doesn't allows type coercion(auto var type conversion).eg, 3=='3' is true but 3==='3' is false
         | ??														    |	Nullish Coalescing Operator, x1 ?? x2   // returns x2 if x1 is nullish(null or undefined) Nullish values are null and undefined (not "" or 0)
         |                                                                 |     // const guest = 0;         Nullish Coalescing operator is same as or(||) operator
         |                                                                 |     // noOfGuestPresent = guest || 10   // this gives 10 even if the number of guest is 0
@@ -397,7 +397,8 @@ debugger;       // keyword used to add breakpoint for the debugging
                             };
 
                 backpack.name
-                backpack["pocket Num"]                      // usable if object property has space in its name, same as 'backpack.pocket Num'
+                backpack["pocket Num"]                      // usable if object property has space in its name; or
+                backpack["pocket"+" "+"Num"]                      //  insert the expression to get the required property name dynamically
                 backpack.color[0]
 
                 backpack.hasOwnProperty("lidOpen")          // returns true
@@ -490,9 +491,10 @@ debugger;       // keyword used to add breakpoint for the debugging
                     x = a.splice(1, 2)      remove 2 values from 1st index of 'a' and return remaining elements in x
 					x = a.toSplice(3)		returns new array from 3rd index element, without changing 'a'
 
-                    sqInt = a1.filter((num, i, a1) => Number.isInteger(num) && num > 0).map((x, i, a1) => x*x);   // map method creates new and forEach doesn't
+                    sqInt = a1.filter((num, i, a1) => Number.isInteger(num) && num > 0).map((x, i, a1) => x*x);
                                             // filter the value based on true/false returned by callback function(filter function argument)
                     sum = a1.reduce((accumulator, current, i, a1) => accumulator + current, 0)          // sum = 10 / 0(accumulator initial value)   // a1 = [1,2,3,4]
+                    a.map((x, i, a1) => x*x)        // map method creates new array and forEach doesn't
 
                     a.entries()       -> map with index and values arrays       // this methods converts array object to maps
                     a.forEach(function(item, index, a){})       // changes done in temporary copy of arr  |  break/continue can't be used
@@ -659,7 +661,8 @@ debugger;       // keyword used to add breakpoint for the debugging
 
 
 ** O/P-I/P
-    console.log(`outputs to console`)			// for basic output and to display simple values.
+    console.log(`outputs to console`)			// for basic output and to display simple values. print to console with trailing newline
+    process.stdout.write()                      // print to console without trailing newline
     console.dir(r)								// to inspect the structure of objects or DOM elements in more detail.
     console.warn()              
     console.error()                 
@@ -715,8 +718,8 @@ debugger;       // keyword used to add breakpoint for the debugging
             for(const key in obj){ console.log(`${key} : ${obj[key]}); }      // object
 
         FOR EACH Method
-            - changes done in temporary copy 
-            - break/continue can't be used
+            - changes done in temporary copy, unlike map method which creates and returns new array
+            - break/continue can't be used like for(), while()
 
             arr.forEach(function(item, index, a){console.log(`${item}, ${index}, {$a}`)})                                   // array
             map.forEach(function(value, key, map){console.log(`${key}, ${value}, {$map}`)})                                 // map
@@ -824,16 +827,32 @@ debugger;       // keyword used to add breakpoint for the debugging
 
                 map, filter, reduce, addEventListener, parent function in closures 
 
-        Callback function
-            setTimeout(function(){}, 2000)      // calls callback function after 2000 miliseconds(2 sec)
+        Callback Functions (makes code execution asynchronous)
+            - Manipulate the synchronous flow of single thread executing JS code
+                    setTimeout(function(){}, 2000)      // calls callback function after 2000 miliseconds(2 sec)
                         eg. function x() {                  // this function will print 1 after 1 second, 2 after 2 seconds and so on till 5
                                 for(let i = 1; i <= 5; i++) {
-                                    setTimeout( function () {
-                                                                console.log(i);
-                                                            }, i*1000);
+                                    setTimeout( 
+                                        function () {
+                                            console.log(i);
+                                        }, 
+                                        i*1000
+                                    );
                                 }
                             }
                             x();
+            - Results in callback hell/Pyramid of doom or inversion of control; function execution depends on others function/api
+                    eg. api.login(credetials, function (userName){
+                            api.dashboard(userName, function (firstName){
+                                api.loadChatbot(firstName)
+                            })
+                        })
+            - to avoid callback hell and inversion of control, we should be using Promises with chaining for dependent function calls
+                        api.login(credetials)
+                            .then(function (userName){
+                                return api.dashboard(userName)
+                            })
+                            .then(firstName => api.loadChatbot(firstName))
 
         Function Methods - 'call', 'apply' & 'bind'
             'call' - to manipulate/modify 'this' value for that function call
@@ -1099,7 +1118,8 @@ debugger;       // keyword used to add breakpoint for the debugging
 
 
 ** OOP - 
-        - JS does not support Classes, rather all JS objects are linked to prototype object containing all methods and properties using "Prototypal Inheritance" / "delegation"
+        - JS does not implicitly support Classes, 
+            rather all JS objects are linked to prototype object containing all methods and properties using "Prototypal Inheritance"/"delegation"
         - In Js, prototype object method is used for all JS objects linked to that Prototype object
                 Eg. all array objects are linked with the "Array.prototype" prototype object
         - whereas in classical OOP with class and instance, methods are copied from class to all instances
@@ -1113,7 +1133,7 @@ debugger;       // keyword used to add breakpoint for the debugging
 
     Class - Create Prototype, create object/link Object to prototype
             Classes are not Hoisted
-            Class Body always executed in Strict Mode "use strict"
+            Class Body always executed in "Strict Mode" i.e. "use strict"
 
         1. Constructor Functions - technique to create objects from function; built-in objects like Array, Maps or Sets are actually implemented
 
@@ -1255,10 +1275,10 @@ debugger;       // keyword used to add breakpoint for the debugging
             obj.initFunc('Earth', true, true)
 
     Encapsulation - 
-        // Public Class Field (available on instance[not on prototype])
+        // Public Class Field (available on instance[not available on prototype])
             need = "Transportation";
 
-        // Private Class Field (available on instance[not on prototype])
+        // Private Class Field (available on instance[not available on prototype])
             #wheels = 4;        // should be defined inside class but outside of function
             #key;               // in case we need private variable initialization in a function, then we define private field in class 
                                     // and then initialize/assign value in that function
@@ -1268,7 +1288,7 @@ debugger;       // keyword used to add breakpoint for the debugging
                 console.log(this.#wheels);  // private class fields, only accessible inside of class
             }
 
-        // Private Methods
+        // Private Methods (not available on instance as well as on prototype)
             #pinVerifier(){
                 console.log("pin verifier");
                 return true;
@@ -1294,39 +1314,53 @@ debugger;       // keyword used to add breakpoint for the debugging
         })  
 
 
-	Old Promise.then() -
-        - An object that is used as a placeholder for the future result of an asynchronous operation
+	Promises -
+        - Object that is used as a placeholder for the eventually filled success or failure result of an asynchronous operation
         - Container for an asynchronously delivered(in future) value. e.g. response from AJAX call
         - Promise Life Cycle:
-            1. Pending - before future value is available
-            2. Async task
-            3. Settled - after async task is finished.
-            Note - Promise is only settled once
-        - we can create a promise object
-            e.g.    cosnt promiseObj = new Promise(function(resolve, reject){        // only one argument - executer function gets executed with promise constructor by passing two function arguments (resolve, reject)
-                        setTimeout(function(){                                       // adding setTimeout to make function asynchronous nature
-                            if(success==true) resolve('response')
-                            else reject(new Error('error'))
-                            }
-                            , 2000)
-                    })
-                    promiseObj.then(res=>res).catch(err=>err)
+                1. Pending - before future value is available while task geting executed asynchronously
+                3. Fulfilled/Rejected - after async task is finished
+            Note - Promise is only settled once; either resole(Fulfilled) or reject(Rejected)
+                 - Promise object is immutable
+        - To create a promise object;
+                cosnt promiseObj = new Promise(function(resolve, reject){        // only one argument, ie. executer function, executed with promise constructor by passing two functions arguments (resolve, reject)
+                    setTimeout(function(){                                       // adding setTimeout to make function asynchronous nature
+                        if(success==true) resolve('response')
+                        else reject(new Error('error'))
+                        },
+                        2000
+                    )
+                })
+                promiseObj.then(res=>res).catch(err=>err).finally(()=>{})
         - promisifying callback (setTimeout),
-                    const wait = function(seconds){
-                        return new Promise(function(resolve){setTimeout(resolve, seconds*1000)})
-                    }
-                    wait(2).then(()=>{
-                        console.log('waited for 2 seconds')
-                        return wait(1)
-                    }).then(()=>{console.log('waited for 1 seconds')})
+                const wait = function(seconds) {
+                    return new Promise(function(resolve, reject) {
+                        setTimeout(() => {reject(new Error("rejectedtime out"));}, 5000);
+                        setTimeout(resolve, seconds * 1000);
+                    });
+                };
+                
+                wait(2).then(()=>{
+                    console.log('waited for 2 seconds')
+                    return wait(1)
+                }).catch(err =>
+                    err
+                ).then(()=>{
+                    console.log('waited for 1 seconds')
+                }).catch(err =>
+                    err
+                ).finally(()=>{})
+        
         - Promise.resolve('response').then(res => res)
         - Promise.reject('error').catch(err => err)
-        - Promise.all([])       // args - array of promises to execute them parallelly, returns - array of response(resolve) promise objects.  
+        
+        - Promise.all([])       // args - array of promises to execute them parallelly, returns - array of response(only if all resolves) promise objects
                                     // in case of any one of the promises reject, then promise.all() will be rejected
         - Promise.race([])      // args - array of promises to execute them parallelly, returns - first settled(resolve/reject) response promise objects 
-        - Promise.allSettled([])// args - array of promises to execute them parallelly, returns - array all settled(resolve/reject) response promise objects 
+        - Promise.allSettled([])// args - array of promises to execute them parallelly, returns - array all settled(both resolve/reject) response promise objects 
                                     // difference between Promise.all() & Promise.allSettled() is Promise.allSettled() will return all the results(resolve/reject) in both cases
-        - Promise.any([])       // args - array of promises to execute them parallelly, returns - only first resolved response promise objects, ignoring failed/rejected responses of before that first resolve
+        - Promise.any([])       // args - array of promises to execute them parallelly, returns - only first resolved response promise objects,
+                                    // ignoring all failed/rejected before that first resolved promise
 
 
     Latest fetch API request/promise
@@ -1342,43 +1376,65 @@ debugger;       // keyword used to add breakpoint for the debugging
 
 
     Async/Await - advance way of consuming/using promises. In background everything
-        - creates a function be executed asynchronously(in Web APIs environment without blocking call stack) and return a promise
+        - "async" creates a function that executed asynchronously(in Web APIs environment without blocking call stack using "await") and only returns a promise(i.e. Even a constant value return from an async function is automatically wrapped in a Promise)
         - async/await are just implementation because behind the scenes it works exactly like consuming promises using fetch().then()
-                eg. const fun = async function(){
+                eg.
+                    const fun = async function(){
                         try{
-                            const res = awaits fetch('https://github.com/programming.git')            // fetch('https://github.com/programming.git').then()      
+                            const res = await fetch('https://github.com/programming.git')            // fetch('https://github.com/programming.git').then()      
                             return res              // stops the execution of function(which is being executed asynchronously in Web APIs environment without blocking call stack) until promise is fulfilled
                         }catch(err){
                             console.error(err)
                             throw err
                         }
-                    }    
+                    }
 
                     (async function(){                                  // <script src="js/asynchronous.js" defer> </script>
                         try{                                            // if this code gives error try force reload - Ctrl + Shift + R
-                            const res = await asyncFunc()
+                            const res = await promise
                             console.log(res)
                         }catch(err){
                             console.error(err)
                         }
                     })()
-                    OR
+                  OR
                     try{                            // await is only valid in async functions and the top-level bodies of modules
-                        const res = await fun()       // so, <script type="module" src="js/asynchronous.js" defer> </script>
+                        const res = await promise     // so, <script type="module" src="js/asynchronous.js" defer> </script>
                         console.log(res)              // top-level await is synchronous(blocks the module code execution)
                     }catch(err){
                         console.error(err)
                     }
 
             // use case of Promise.all([])
-                const imgs = [].map(async img => await createlmage(img))        // returns promise objects
-                const imgsEl = await Promise.all(imgs);                         // promise objects resoled to values    
-                console. log(imgsEl) 
-                imgsEl. forEach(img = img.classList.add('parallel')):
+                const imgs = [].map(async img => await createlmage(img))        // createlmage() returns promise object
+                const imgsEl = await Promise.all(imgs)                          // promise objects resoled to values
+                console.log(imgsEl)
+                imgsEl.forEach(img => img.classList.add('parallel'))
+        
+    
+        - p1 and p2 start their timers (5s and 3s)(as soon as when they are created)
+                const p1 = new Promise(resolve => setTimeout(() => resolve("done1"), 5000));
+                const p2 = new Promise(resolve => setTimeout(() => resolve("done2"), 3000));
+                
+                const r1 = await p1;
+                console.log("r1:", r1);
+                const r2 = await p2;
+                console.log("r2:", r2);
+
+                    
+                | Time |                       What Happens                        |
+                + ---- + --------------------------------------------------------- +
+                | 0s   | "p1" and "p2" start their timers (5s and 3s)              |
+                | 0–5s | "await p1" → Pauses for 5s                                |
+                | 3s   | "p2" finishes (but you're not waiting on it yet)          |
+                | 5s   | "p1" resolves, "await" resumes                            |
+                | 5s   | "await p2" — already resolved at 3s, so resumes instantly |
+                | 5s   | Both "console.log" gets executed                          |
 
 
 
-** Error Handling - 
+
+** Error Handling -
     try{
         throw new Error('myError')
     }catch(e){
@@ -1415,8 +1471,8 @@ debugger;       // keyword used to add breakpoint for the debugging
     - HTML linking should be with <script type="module">
     - all imports are hoisted
     - Modules are imported Synchronously(main code(index.js) is executed only after all imported modules are downloaded and executed)
-    - imports are not copy of exported variables but are reference(points to the same place in memory) 
-    - there are two types of ES6 export/imports
+    - imports are not copy of exported variables but are reference(points to the same place in memory), so changing state of exported/imported variables affetcs original
+    - there are two types of ES6(newer) export/imports
         1. Named export/import
             import { var1, var2 as variable } from "./fuctionContainer.js"
             import * as x from "./fuctionContainer.js"
@@ -1433,7 +1489,7 @@ debugger;       // keyword used to add breakpoint for the debugging
                 export default function(){}
                 export default "234567890987654"
 
-    - CommonJS export/import
+    - CommonJS(older) export/import
         - Developed for Node.js(requre() function & export object is not available in browser but are available in Node.js)
 
             const { x } = require("../fuctionContainer.js)  

@@ -1,15 +1,13 @@
-Types of cloud services
-    public 	- Owned and operated by provider(AWS, Microsoft Azure, GCP) of cloud services over the internet based on Pay-as-you-go pricing model.
-    private - Single organization that work on private infrastructure(on-premises or hosted by a third-party provider); suitable for high security and compliance requirements.
-    hybrid 	- Combines public and private cloud infrastructures by providing flexibility and scalability while maintaining control over sensitive data.
+AWS is a cloud provider(like Microsoft Azure, GCP) which provides you with services and servers that you can use on demand and scale easily
+    some of the biggest websites hosted on AWS 
+        1. amazon.com
+        2. netflix  
 
 
-
-Types of cloud computing services model
-	On-premises >                                                                                   - Everything is managed by us
-	IAAS        >                                        Virtualization|Servers|Storage|Networking  - Managed by cloud; AWS EC2
-	PAAS        >                  Runtime|Middleware|OS|Virtualization|Servers|Storage|Networking  - Managed by cloud; AWS Elastic Beanstalk
-	SAAS        > Application|Data|Runtime|Middleware|OS|Virtualization|Servers|Storage|Networking  - Everything is managed by cloud; AWS Rekognition for ML
+AWS Cloud History -
+    2002 - internally launched
+    2004 - publicly launched SQS(simple queue services)
+    2006 - relaunched publicly SQS, S3, EC2
 
 
 
@@ -34,22 +32,6 @@ Shared Responsibility Model
 
 
 
-
-AWS Cloud Practitioner > SAA-03
-
-AWS is a cloud provider which provides you with services and servers that you can use on demand and scale easily
-    some of the biggest websites hosted on AWS 
-        1. amazon.com
-        2. netflix  
-
-AWS Cloud History -
-    2002 - internally launched
-    2004 - publicly launched SQS(simple queue services)
-    2006 - relaunched publicly SQS, S3, EC2
-
-
-
-
 Ideal AWS Application Architectures;
 	1. Stateless Server Architectures; Stateless : Store session data(ElastiCache, RDS, Client HTTP cookies)
 										Multi-AZ and Health Checks enabled				  Multi-AZ ASG
@@ -64,11 +46,37 @@ Ideal AWS Application Architectures;
 				    							Multi-AZ					Multi-AZ ASG	  |	   		(res caching)
 		Route 53    <-- 	User   	-->	  Elastic Load Balancer		-->			EC2 		--|	  
 				    	 Session ID			 Health Checks						ENI			  |	  	  
-																							  ↳				EFS	
-																											 
+																							  ↳				EFS
 
 
-	3. Serverless Architectures
+
+	3. Microservice Architecture
+									↗↙------>  API Gateway  <------>  Lambda  <------>  ElastiCache
+								  ↗↙					 ↖↘
+		Route 53  <-->	Users  <---- HTTPS ----->  ELB <--> ECS  <------>  DynamoDB
+								  ↘↖				 ↖↘
+								  	↘↖--->  ELB  <-->  EC2  <------>  RDS
+
+
+
+	4. Serverless Architectures
+			 			 Authenticate
+				 	    ↗↙----------------<->  Cognito
+				     ↗↙Temp IAM permission 	  	  ⬆
+				   ↗↙For partial S3 access		  |Auth Verify
+				 ↗↙     						  ⬇
+			Client    <--- REST HTTPS --->    API Gateway    <--- Invoke --->    Lambda    <--- Query/read --->    DAX <----> DynamoDB <--Event--> Lambda --> SES
+			⬇⬆	 ↘↖				   			   Caching															 Caching 
+	Temp IAM⬇⬆     ↘↖
+  Permissions↘↖     ↘↖
+		 	   S3	   CloudFront Global    <--- OAC --->    S3
+		  Cloud Storage									   Static
+		    for user↘↖									  Content
+					  ↘↖
+						Lambda	---->  S3
+					  Thumbnails
+
+
 																					VPC
 																Public Subnets					Private Subnet
 																Security Group 				   
@@ -154,19 +162,40 @@ AWS Services
 										"AWS" : ["arn:aws:iam::123456789012:root"]
 									},
 									"Action" : [
-										"s3:GetObject",
-										"s3:PutObject",
-										"iam:List*"         // allows all list___ operations on IAM using this policy
+										"iam:List*",
+										"s3:ListBucket",	 // bucket level permission
+										"s3:GetObject",		|
+										"s3:PutObject",		|// object level permissions
+										"ec2:StopInstances",
+										"kms:DescribeKey"
 									],
-									"Resource" : ["arn:aws:s3::mybucket/*"],
-									"Condition" : 
+									"Resource" : ["arn:aws:s3::mybucket", "arn:aws:s3::mybucket/*", "arn:aws:ec2:ap-south-1:123456789012:instance/*"],
+									"Condition" : {
+										"NotIpAddress" : {
+											"aws:SourceIp" : ["192.0.2.0/24", "203.0.113.0/24"]
+										},
+										"stringEquals" : {
+											"aws:RequestedRegion" : ["ap-south-1", "eu-west-1"],		// only to allow API calls to a specified AWS region
+											"ec2:ResourceTag/Project":"MyProject",
+											"aws:PrincipalTag/Department" : "Data",
+											"aws:PrincipalOrgID" : "o-yyyyyyyyyy",
+											"kms:CallerAccount" : "123456789012",
+											"kms:ViaService" : ["ec2.ap-south-1.amazonaws.com", "sqs.ap-south-1.amazonaws.com"]
+										},
+										"BoolIfExists":{
+											"aws:MultiFactorAuthPresent" : true
+										}
+									}
 								}
 							]
 						}
 
-				IAM Roles -
-					- Assigning specific permissions for the AWS services/accounts/external Web Identity for accessing AWS resources
+				IAM Roles (Proxy - assumes assigned permission)
+					- Assigning specific permissions for the AWS services/accounts/external Web Identity for accessing AWS resources temporarily by forfaiting own permissions
 					- Roles provide temporary security credentials(not userid/pass) to whomever has the ability to assume that role
+				
+				Resource Based Policy
+					- Attached on supported resources(S3 buckets, SNS topics, SQS queues, etc.) for becoming accessible from defined service/account
 
 				IAM Security Tools(Audit permissions of accounts)
 					IAM Credentials Report (account-level)
@@ -189,24 +218,33 @@ AWS Services
 					- IAM User Groups can contain only IAM Users
 
 
+		AWS IAM Identity Center (formarly AWS Single Sign-On)
+			- Managing one login centrally across multiple;
+					• AWS accounts in AWS Organizations
+					• Business cloud applications(e.g., Salesforce, Box, Microsoft 365, etc.)
+					• SAML2.0 enabled applications
+					• EC2 Windows Instances
+			- built-in identity store in IAM Identity Center or integrated to 3rd party identity providers(Active Directory(AD), OneLogin, Okta) for user pool
+			- allow restricting user/group access according to the defiend "Permission Set"(collection of IAM policies) to assume role for accessing allowed resources
+
+
 
 
 	Advanced Identity
-		AWS Organizations - Global Service (for management of multi-account) 
-			- Used to manage multiple child accounts under single Master/Management account
-			- Service Control Policies(SCP) - centrally manage all IAM users, groups, and roles, including the AWS account root user in your AWS Organization
+		AWS Organizations - Global Service (for multi-account management)
+			- Used to manage multiple child/member accounts(can be part of only one OU(organizational unit)) under single Master/Management account
+			- Service Control Policies(SCP) 
+				• IAM policies applied on OU or accounts
+				• To centrally manage all IAM users, groups, and roles, including the AWS account root user
+				• SCP does not apply to the Master/Management Account and service-linked roles(enables AWS services to integrate with AWS Organizations)
+				• Defaultly everything is restricted, have to explicitly Allow account privileges
+				• Use case; restrict access to certain services, enforce PCI compliance by explicitly disabling services
 			- Cost Benefits
-				• consolidated billing across all accounts(no need to add payment method for all accounts)
+				• consolidated billing(one bill) across all accounts(no need to add payment method for all accounts)
 				• aggregated usage results pricing benefits(volume discount for EC2, S3, etc.)
 				• effective sharingly usage of reserved EC2 instances for optimal savings
+				• Use tagging standards for billing & monitoring purposes
 			- API is available to automate AWS account creation
-				• Defaultly everything is restricted, have to explicitly Allow account privileges
-				• Allow or Deny IAM actions(privileges) applied to all the Users and Roles of the Account, including Root/Admin user
-				• Does not apply to the Master Account and service-linked roles(enables AWS services to integrate with AWS Organizations)
-				• Use case; restrict access to certain services, enforce PCI compliance by explicitly disabling services
-			- Consolidated Billing
-				• Combined Usage : combine the usage across all AWS accounts in the AWS Organization to share the volume pricing, Reserved Instances and Savings Plans discounts
-				• One Bill : get one bill for all AWS Accounts in the AWS Organization
 			- management account can turn off Reserved Instances discount sharing for any account in the AWS Organization, including itself
 			- Multi Account strategies
 				• Create account(Organizational Units);
@@ -217,18 +255,17 @@ AWS Services
 					- for better resource isolation(eg. VPC)
 					- to have separate per-account service limits
 					- isolated account for logging
-				• Multi Account vs One Account Multi VPC
-				• Use tagging standards for billing purposes
-				• Enable CloudTrail on all accounts, send logs to central S3 account as well as send CloudWatch Logs to central logging account
+				• Single point of config to Enable CloudTrail on all accounts to send logs to central S3 account as well as send CloudWatch Logs to central logging account   
 
 
 		AWS Control Tower
-			- gives ability to easily set-up and govern a secure and compliant multi-account AWS environment based on best practices
+			- gives ability to easily set-up and govern a secure and compliant multi-account AWS environment(using AWS Organization) based on best practices
+			- Runs on top of AWS Organizations; automatically sets up AWS Organizations to organize accounts and implement SCPs(Service Control Policies)
+			- Benefits;
 				• Automate the set up of your environment in a few clicks
-				• Automate ongoing policy management using Control Tower Guardrail(governance rules on OU to enforce policies or detect violations)
+				• Automate ongoing policy management using Control Tower Guardrail(governance rules on OU to enforce policiesusing SCP or violation detection using AWS Config)
 				• Detect policy violations and remediate them
 				• Monitor compliance through an interactive dashboard
-			- Runs on top of AWS Organizations; automatically sets up AWS Organizations to organize accounts and implement SCPs(Service Control Policies)
 
 
         AWS Resource Access Manager(RAM)
@@ -255,38 +292,31 @@ AWS Services
 
 
 		AWS Cognito
-			• Managed, serverless database of users for your Web/Mobile app users(potentially millions) with redirection sign-in of Facebook, Google, and Twitter
-			• Instead of creating them an IAM user, you create application users in Cognito
+			• Cognito User Pools:
+				- Managed, serverless database of users(potentially millions) for your Web/Mobile app with redirection sign-in of Facebook, Google, and Twitter
+				- Integrate with API Gateway & Application Load Balancer
+			• Cognito Identity Pools (Federated Identity):
+				- Instead of creating them an IAM user, provides temporary AWS credentials to registered users of our application to access some resources of AWS directly
+				- Integrate with Cognito User Pools as an identity provider
+				- Use Case : Create mobile user accounts and provide IAM permissions, so they can be able to access their own personal space in the S3 bucket
 
 
 		AWS Directory Services
 			- Microsoft Active Directory (AD) : doesn't belong to AWS
 				• On Windows Server that has AD domain services, AD is a central system that manages users and their access to network resources
 				• Handles logins and permissions, making network administration easier
-				• AD is way for you to manage users, computers, printers, file shares, security groups and so on, usually within on-premises system
+				• AD is way for you to manage user accounts, computers, printers, file shares, security groups and so on, usually within on-premises system
 
-			- 3 types of AD available in AWS
+			3 types of AD available in AWS
 				• AWS Managed Microsoft AD	
-					- Create your own AD in AWS, manage users locally, supports MFA
-					- Establish “trust” connections with your on-premise AD
+					- Create your own AD in AWS to manage users locally with MFA support
+					- Establish “trust” connections with on-premise AD & AWS Managed AD
 				• AD Connector
-					- Directory Gateway(proxy) to redirect to on-premise AD, supports MFA
-					- Users are managed on the on-premise AD
+					- Directory Gateway(proxy) to redirect directory requests to your existing on-premise AD with MFA support
+					- Users are managed only on-premise AD
 				• Simple AD
-					- AD-compatible managed directory on AWS
+					- AD-compatible stand-alone managed directory on AWS
 					- Cannot be joined with on-premise AD
-
-
-		AWS IAM Identity Center (formarly AWS Single Sign-On)
-			- managing users across many accounts in a central manner instead of managing it per account basis
-			- one login for multiple AWS accounts & business applications;
-				• AWS accounts in AWS Organizations
-				• Business cloud applications(e.g., Salesforce, Box, Microsoft 365, etc.)
-				• SAML2.0-enabled applications
-				• EC2 Windows Instances
-			- Identity providers - user pool
-				• Built-in identity store in IAM Identity Center
-				• 3rd party: Active Directory(AD), OneLogin, Okta
 
 
 		Amazon WorkSpaces
@@ -790,7 +820,8 @@ AWS Services
                     - ALB/NLB/EC2 Instance; Cloudfront can privately connects to these
                 • Custom Origin (HTTP)
 					- S3 website(must first enable the bucket as a static S3 website)
-					- Any HTTP backend(including edge lambda function) you want
+					- Any HTTP backend you want
+					- Edge Function((CloudFront Functions & Lambda@Edge))
 			- Security;
 				• DDoS protection(because application lives worldwide)
 				• integration with Shield and AWS Web Application Firewall
@@ -805,6 +836,10 @@ AWS Services
 					1. Price Class All: all regions, best performance
 					2. Price Class 200: most regions, excluding most expensive regions
 					3. Price Class 100: only least expensive regions
+			- Edge Function(CloudFront Functions & Lambda @ Edge) : code attached to CloudFront distributions runs close to users for minimum latency
+				1. CloudFront Functions : Native CloudFront feature only for client req/res; lightweight, high-scale(millions req/s), latency-sensitive JavaScript functions
+				2. Lambda@Edge : for client and origin(server) req/res from CloudFront; auto scaled(1000s of req/s) NodeJS/python functions; CloudFront replicates function to its locations
+				• Use Cases; customize the CDN content, Dynamic Web Application at the Edge, Search Engine Optimization (SEO)
 
 
 		AWS S3 Transfer Acceleration
@@ -920,8 +955,8 @@ AWS Services
 				2. On-demand mode:
 					- Default capacity provisioned(4 MB/s in or 4000 records per second) with auto scalable based on observed throughput peak during the last 30 days
 					- Pay per stream per hour & data in/out per GB
-		
-		
+
+
 		AWS Data Firehose: 
 			- Fully managed, serverless, near real-time service with buffer capability(accumulate before sending to target)
 			- Load streaming data(with optional transformation using Lambda) to data stores(S3, Redshift, OpenSearch, MongoDB, HTTP endpoint etc.) and analytics tools(Managed Apache Flink)
@@ -957,10 +992,11 @@ AWS Services
 		• Visualize the performance of our cloud deployments
 
 		AWS CloudWatch
-			- collect and track metrics, collect and monitor log files, and set alarms for cloud and on-premises servers
-			CloudWatch Metrics - for every services in AWS	
-				- Monitors CPU-Utilization, Networking mapped with Timestamps
+			- collect and track metrics, collect and monitor log files, and set alarms for almost all cloud services as well as on-premises servers
+			CloudWatch Metrics - for every service in AWS diffreciated via namespaces
+				- Monitors CPU-Utilization, Networking mapped with Timestamps and near-real-time delivery to any streaming service(Kinesis) with optional filtering to stram only required
 				- We can create CloudWatch dashboards of metrics
+				- Up to 30 dimensions(attribute of a metric - instace id, environment, etc.) per metric
 				- Important Metrics
 					• EC2 instances: CPU Utilization, Status Checks, Network (not RAM)
 						- Default metrics every 5 minutes
@@ -970,7 +1006,6 @@ AWS Services
 					• Billing: Total Estimated Charge (only in us-east-1)
 					• Service Limits: how much you’ve been using a service API
 					• Custom metrics: we create and push your own metrics
-
 			CloudWatch Alarms
 				- Alarms are used to trigger notifications for any CloudWatch metric fall outside thresh-hold(sampling, %, max, min, etc.) limit with 3 status: "OK", "INSUFFICIENT_DATA", "ALARM"
 				- Alarms actions for thresh-hold hit;
@@ -978,31 +1013,44 @@ AWS Services
 					• for EC2 Actions : stop, terminate, reboot or recover an EC2 instance
 					• for SNS notifications : send a notification into an SNS topic
 					• for CloudWatch Billing metric : Billing alarm
-
+                - Composite Alarm : Monitoring the status of multiple alarms based on AND and OR conditions
 			CloudWatch Logs
-				- A single, highly scalable service that centralizes the real-time monitoring of logs from all of your systems, applications, and AWS services that you use
-				- Adjustable CloudWatch Logs retention even for infinite period of time 
+				- A single, highly scalable service that centralizes the real-time monitoring of logs from all of your systems, applications, and AWS services
+				- Adjustable CloudWatch Logs retention(log expiration policies, 1 day to 10 yrs) even for infinite period of time until used on Lambda, Kinesis, OpenSearch or exported to S3
+				- Logs are encrypted by default with ability to use KMS-based encryption with users own keys
 				- Collect logs from these services by assigning IAM permissions to the services which will allows these services to send logs in CloudWatch
-					• EC2 or on-premises servers : with the help of small hybrid agent software; CloudWatch log agent
+					• CloudWatch Unified Agent
+					• EC2 or on-premises servers : with the help of small hybrid agent SDK(software); CloudWatch log agent(only logs)/CloudWatch Unified Agent(metrics(Disc/RAM/CPU/Network) + logs)
 					• Elastic Beanstalk : collection of logs from application
 					• ECS : collection from containers
 					• AWS Lambda : collection from function logs
+					• API Gateway
+					• VPC Flow Logs: VPC specific logs
 					• CloudTrail based on filter
 					• Route53 : Log DNS queries(requests)
+				CloudWatch Logs Insight : querying capability within CloudWatch Logs from multiple accounts for creating visualizations, dashboard and exports
+				 	• CloudWatch Container Insights : Metrics & logs for ECS, EKS, Kubernetes on EC2, Fargate with the help of containerized version of the CloudWatch Agent
+					• CloudWatch Lambda Insights : Detailed metrics to troubleshoot serverless applications
+					• CloudWatch Contributors Insights : Find “Top-N” Contributors through CloudWatch Logs
+					• CloudWatch Application Insights : Automatic dashboard to troubleshoot your application and related AWS services
+                CloudWatch Logs subscription : filter multi account logs to be deliverd to any destination like, Kinesis Data Strams, etc.
+
 
 		AWS EventBridge(formerly CloudWatch Events)
-			- react to events in AWS, or trigger a rule on a schedule
-			- A service that provides a real-time stream of system events that describe changes in AWS resources
-			- You can archive events (all/filter) sent to an event bus (indefinitely or set period)
-			- Ability to replay archived events
+			- react to events in AWS/3rd party services/custom application, or trigger a rule on a schedule
+			- A service that provides a real-time stream of system events fetched from Event Bus based on defined rules, describing changes in resources
+			- Allow archiving(indefinitely or defined period) filterd events sent to an event bus(from AWS services, 3rd party services or custom applications) with reply ability
+            - Event buses can be accessed by other AWS accounts using resource-based policies
 			EventBridge Rules/Sheduler : Cron jobs(Scheduled scripts)
 
 
-		AWS CloudTrail 
-			- Defaultly enabled(for All Regions) continuous logging of your AWS account activity across your AWS infrastructure into CloudWatch Logs or S3, defaulty encrypted 
-			- Provide governance, compliance, operational and risk auditing of your AWS account
-			- provides event history of your AWS account activity, including actions taken through the AWS Management Console, AWS SDKs, command-line tools, and other AWS services
-			CloudTrail Insights 
+		AWS CloudTrail
+			- Defaultly enabled(for All Regions) continuous encrypted logging of AWS accounts activity across multi-region AWS infrastructure into CloudWatch Logs or S3
+			- provides event/activity history of AWS account, for actions taken through the AWS Management Console, AWS SDKs, command-line tools, and other AWS services
+			- Events Retention upto 90 days in CloudTrail, for longer retention log them to S3 and use Athena for querying in s3 for analysis
+			- Allow integration with EventBridge, to send event for specific user activities
+			- Provide governance, compliance, operational and risk auditing of AWS accounts
+			CloudTrail Insights
 				- automated analysis of your CloudTrail Events
 
 
@@ -1068,7 +1116,7 @@ AWS Services
 
 		AWS VPC(virtual private cloud)  - Regional resource
 			- private virtual network to deploy your resources dedicated to your AWS account in specific region
-			- VPC CIDR range: 172.31.0.0/16 - range of IP addresses that are allowed within VPC; 172.31.0.0/16 => 172.31.0.0 - 172.31.255.255 total of 65,536 IP addresses
+			- Default IPs addresses range that are allowed within default VPC(Auto-created for new AWS accounts): 172.31.0.0/16  => 172.31.0.0 - 172.31.255.255;  65,536 IP addresses
 
 			Subnet  - AZ specific resource
 				- allow you to partition your network inside your VPC according to Availability Zones 
@@ -1172,19 +1220,20 @@ AWS Services
 
 
 		AWS Shield Advanced: 
-			- Optional DDoS attack protection service with costs about $3,000 per month per organization
+			- Optional DDoS attack protection service to mitigate layer 7 attacks automatically with costs about $3,000 per month per organization
 			- Protect against more sophisticated attack on Amazon EC2, Elastic Load Balancing (ELB), Amazon CloudFront, AWS Global Accelerator and Route 53
 			- 24/7 access to AWS DDoS response team (DRP) with protection against higher usage fee incured during traffic spikes due to DDoS
 
 
-		AWS WAF(Web Application Firewall): 
-			- inspects web requests coming into your application(Application Load Balancer, API Gateway, CloudFront) and filters requests based on rules
+		AWS WAF(Web Application Firewall) (Regional Resources; except ACM defined globally if deployed on CloudFront) 
+			- inspects web requests coming into your application(Application Load Balancer, API Gateway, CloudFront) and filters requests based on rule groups
+			- Rule group is a reusable set of rules that you can add to a web ACL
 			- protect web applications from common web exploits that may affect availability, compromise security, or consume excessive resources
 			- Defined on Application Layer(HTTP/HTTPS)
-			- Define Web ACL (Web Access Control List):
-				• Rules can include IP addresses, HTTP headers, HTTP body, or URI strings
+			- Web ACL(Web Access Control List) : web access control lists, and their rules
+				• Rules can include IP addresses, HTTP headers, body, or URI strings to Protects from common attack like, SQL injection and Cross-Site Scripting(XSS)
 				• Protects from common attack - SQL injection and Cross-Site Scripting (XSS)
-				• Size constraints, geo-match (block countries)
+				• Size constraints(eg. max 2 KB request), geo-match (to block request from specific countries)
 				• Rate-based rules (to count occurrences of events); for DDoS protection
 
 
@@ -1193,13 +1242,14 @@ AWS Services
 
 
 		AWS Firewall Manager
-			- A central place to manage security rules in all accounts of an AWS Organization
-			- for,
-				• VPC Security Groups for EC2, Application Load Balancer, etc.
-				• WAF rules
-				• AWS Shield Advanced
-				• AWS Network Firewall
-			- Rules in Firewall Manager going to be applied to all the current and future accounts and for all the resources as they are being created in these accounts
+			- Centrally manage security rules across all AWS accounts in your AWS Organization
+			- Rules in Firewall Manager going to be applied to all the current and future accounts, for all the security policy applied resources as they are being created in these accounts
+			- Security policy region level set of security rules for;
+				• VPC Security Groups (for EC2, Application Load Balancer, ENI resources in VPC)
+				• WAF rules (for ALB, CloudFront, API Gateway)
+				• AWS Shield Advanced (for ALB, CLB, NLB, Elastic IP, CloudFront)
+				• AWS Network Firewall (at VPC level)
+				• Route 53 Resolver DNS Firewall rules
 
 
 		AWS Penetration Testing
@@ -1226,36 +1276,43 @@ AWS Services
             - helps to uncover hidden bugs & performance bottlenecks for EC2, ECS, EKS, RDS, etc.
 
 
-		AWS KMS(Key Management Service)
-			- Managed service to manage encryption keys
-			KMS Custom Key Store : CloudHSM(Hardware Security Module)
-				- AWS only provisions encyption hardware(HSM) but encryption keys management is users/customers responsibility
-				- HSM device is tamper resistant, and security standard: FIPS 140-2 Level 3 compliance
-			- Types of KMS Keys;
+		AWS KMS(Key Management Service) (Regional Resource)
+			- Managed service to manage encryption keys with seamlessly integration to EBS, S3, RDS, SSM, etc.
+			- To restrict kms key access/cross account access, we could define "KMS Key Policy" without which we cannot access kms keys
+			- Multi-Region KMS Keys
+				• KMS Multi-Region key(MRK) have the same key ID/material but are NOT global(Primary + Replicas), i.e. each Multi-Region key need to be managed independently
+				• Use cases: Encrypt in one Region and decrypt in other Regions; global client-side encryption, encryption on Global DynamoDB/Aurora
+			- Types of AWS KMS Keys;
 				• Customer Managed Key:
 					- Create, manage and used by the customer, can enable or disable
-					- Possibility of rotation policy (new key generated every year, old key preserved)
-					- Possibility to bring-your-own-key
+					- Allow key rotation policy(eg. new key generated for every 90-2560 days, prserving old key)
+					- Allows to bring-your-own-key
+					- costs : $1 per month per key + $0.03 per 10000 API calls to KMS
 				• AWS Managed Key:
-					- Created, managed and used by AWS on the customer’s behalf
+					- Created, managed and used by AWS on the customer’s behalf with automatic key rotaion for every 1 year
 					- Used by AWS services (aws/s3, aws/ebs, aws/redshift)
+					- Free to use
 				• AWS Owned Key:
-					- Collection of CMKs that an AWS service owns and manages to use in multiple accounts
+					- Collection of CMKs that an AWS service owns and manages to use in multiple accounts. eg. SSE-S3, SSE-SQS, SSE-DDB (default key)
 					- AWS can use those to protect resources in your account (but you can’t view the keys)
+					- Free to use
 				• CloudHSM Keys (custom keystore):
 					- Keys generated from your own CloudHSM hardware device
 					- Cryptographic operations are performed within the CloudHSM cluster
+			KMS Custom Key Store : CloudHSM(Hardware Security Module)
+				- AWS only provisions encyption hardware(HSM) but encryption keys management is users/customers responsibility
+				- HSM device is tamper resistant, and security standard: FIPS 140-2 Level 3 compliance
 
 
-		AWS Certificate Manager (ACM)
-			- Provision, manage, and deploy SSL/TLS(public-private) certificates used to provide in-flight traffic encryption for websites by providing an HTTPS(http with SSL/TLS handshake) endpoints
-			- Free of charge for public TLS certificate
-			- Provids automatic TLS certificate renewal
-			- Integrations with (loads TLS certificates on)
+		AWS Certificate Manager (ACM) (Regional Resource)
+			- Provision, manage, and deploy SSL/TLS(public-private) certificates used to provide in-flight traffic encryption for websites providing an HTTPS(http with SSL/TLS handshake) endpoints
+			- Free of charge for ACM provided public TLS certificate including automatic certificate renewal feature after every 60 days
+			- Integrations with(i.e. loads TLS certificates on);
 				• Elastic Load Balancers(X.509 certificate)
 				• CloudFront Distributions
 				• APIs on API Gateway
 				• Create upload users own certificates
+				Note - cannot use ACM with EC2
 			- SSL(Secure Socket Layer)/TLS(Transport Layer Security) is secret handshake(encryption + Trust) between client and server to create private, encrypted tunnel before communication
 			- Certificates are digitally signed & issued by trusted Certificate Authorities(CA) like; Symantec, GoDaddy, Letsencrypt, etc. with expiration time that's why certificates must be renewed
 			- When setting an HTTPS listener, 
@@ -1265,9 +1322,11 @@ AWS Services
 					SNI - Let clients tell the server which domain it’s reaching before a secure connection so that Server knows exactly which SSL/TLS certificate to send, 
 						  SNI allows multiple SSL certificates to be loaded on single server for multiple domains hosting on single server(12.134.123.44) -> a.com(certA), b.com(certB)
 
+
 		AWS Secrets Manager
-			- Secrets storing service with capability to force rotation of secrets every X days with automated generation of secret on rotaion using lambda functions
-			- Secret to be managing in RDS credentials with encryption using KMS
+			- Secrets storing service with capability to force rotation of secrets every N days with automated generation of secret on rotation using lambda functions
+			- Secret to be managing in RDS credentials with ability of encryption using KMS
+			- Replicate Secret(Multi-Region) : Allow replication of Secrets across multiple AWS Regions with auto sync read replicas of primary secret
 			- Pricing:
 				• $0.40 per secret per month
 				• $0.05 per 10,000 API calls
@@ -1293,11 +1352,11 @@ AWS Services
 			- Can protect against CryptoCurrency attacks (has a dedicated “finding” for it)
 
 
-		Amazon Inspector
-			- Automated Security Assessments(find software vulnerabilities) only for evaluation of EC2 instances, Container Images & Lambda functions
+		AWS Inspector
+			- Allow to run Automated Security Assessments(find software vulnerabilities) only for evaluation of EC2 instances, Container Images & Lambda functions
 			- For EC2 instances
 				• Leveraging the AWS Systems Manager (SSM) agent
-				• Analyze against unintended network accessibility, reachability
+				• Analyze against unintended network reachability
 				• Analyze the running OS against known vulnerabilities
 			- For Container Images push to Amazon ECR
 				• Assessment of Container Images as they are pushed
@@ -1310,15 +1369,15 @@ AWS Services
 			- Send findings to Amazon Event Bridge with risk score associated for all vulnerabilities for prioritization
 
 
-		AWS Config
-			- Helps with auditing and recording compliance and configurations changes over time of your AWS resources
-			- Possibility of storing the configuration data into S3 (analyzed by Athena)
+		AWS Config (Regional Resource)
+			- Record configuration changes over time of your AWS resources based on compliance rules (AWS managed or custom defined in Lambda)
+			- Possibility of storing the configuration data into S3(to be analyzed by Athena) or receiving alerts using SNS notifications
 			- Questions that can be solved by AWS Config:
 				• Is there unrestricted SSH access to my security groups?
 				• Do my buckets have any public access?
 				• How has my ALB configuration changed over time?
-			- You can receive alerts (SNS notifications) for any changes
-			- AWS Config is a per-region service but can be aggregated across regions and accounts
+			- Pricing : $0.003 per configuration item recorded per region, $0.001 per config rule evaluation per region
+			AWS Config Remediation : automatically re-configure non-compliant resources using SSM Automation Documents with reply(upto 5 times) capability
 			AWS Config Resource
 				- View compliance of a resource over time
 				- View configuration of a resource over time
@@ -1485,20 +1544,30 @@ AWS Services
 			- Out of many, the most important features are:
 				• Patching automation for enhanced compliance
 				• Run commands across an entire fleet of servers
-				• Store parameter configuration with the SSM Parameter Store
+				• Store parameter configuration & secrets with the SSM Parameter Store with encryption Possibility
 				• Works for Linux, Windows, MacOS, and Raspberry Pi OS (Raspbian)
             - Automation RunBook : Pre-defined SSM document(instructions) for specific action. like; restart all the EC2 instances, Take snapshots of all RDS
-            SSM Session Manager 
-                - connect to EC2 instance by adding IAM role to EC2 instance for accessing AWS Systems Manager
+            
+			SSM Session Manager 
+                - connect to EC2 instance by adding IAM role to EC2 instance for accessing AWS SSM
                 - Allows you to start a secure shell on your EC2 and on-premises server without SSH access enabled(port 22 opening), bastion hosts, or SSH keys needed
                 - Allows invoking using EventBridge Send session log data to S3 or CloudWatch Logs and notification to SNS about command status
-			
-            AWS Systems Manager Parameter Store
-                - Secure storage for configuration and secrets(API Keys, passwords, configurations, etc.)
-                - Serverless, scalable, durable(respond to many API calls all the time), easy SDK.
-                - Access control to each parameter in the parameter store using IAM
-                - Version tracking & encryption (using KMS)
             
+			AWS SSM Parameter Store
+                - Secure storage for configuration and secrets(API Keys, passwords, configurations, etc.)
+                - Serverless, scalable, durable(respond to many API calls all the time), easy SDK
+                - Access control to each parameter in the parameter store using IAM
+                - Allow Version tracking & KMS encryption
+				- Parameter Store tiers;
+					1. Standard
+						- 10,000 number of parameters allowed(per AWS account and Region)
+						- Maximum size of 4 KB for a parameter value
+						- Free for use/parameter storage
+					2. Advanced
+						- 1,00,000 number of parameters allowed(per AWS account and Region)
+						- Maximum size of 8 KB for a parameter value
+						- charges applied per key & for kye storage with $0.05 per advanced parameter per month
+						- Also comes with ability to set Parameter Policy to assign a TTL to a parameter(expiration date) to force updating or deleting sensitive data such as passwords
 
 
 		AWS Amplify
@@ -1841,11 +1910,35 @@ AWS Services
 			- But, ECS/Fargate is always preferred and recommended for running any Docker images
 
 
-		AWS Lambda(Function as a Service)
+		AWS Lambda(Function as a Service) Regional Resource
 			- Serverless, on-demand(concurrent and independant execution), auto-scalable, event-driven(invoked by AWS as needed) & designed for short executions(max 15 min)
-			- Easy to get more resources per functions(up to 10GB of RAM) & Increasing RAM will also improve CPU and network performance
+			- Easy to get more resources per functions(128 MB, up to 10GB of RAM) & Increasing RAM will also improve vCPU and network performance
+			- Only have upto 4 KB of environment variable space, and additional emphoral(/tmp) disk space of 512 MB upto 10 GB
+			- Default account limit of 1,000(negotiable) concurrent executions per all functions of region, recommended to use reserved concurrency(limits concurrent executions for a function)
+			- Lambda function deployment size limits;
+				• 50 MB for compressed .zip
+				• 250 MB for Un-compressed code + dependencies 
+				• <250 MB, /tmp directory can be used at startup
+			- Lambda provides both synchronous & asynchronous invocations
+				• Synchronous invocation
+					- Caller waits for return response from lambda, used for Real-time APIs(API Gateway), sync workflows(Step Function)
+					- Retries should be controlled by caller in case of error
+				• Asynchronous invocation(background processing)
+					- Caller invokes and moves on, used for Background tasks(S3 event notification), event triggers(SNS, EventBridge)
+					- Retries(upto 2 more times) is controlled by AWS with configuration ability of dead-letter queues(DLQ) or Event Destinations
+					- For throttling errors(429) and system errors(500-series), Lambda returns the event to internal event queue and re-run the function again for up to 6 hours
+					- retry interval from internal event queue increases exponentially from 1 second after the first attempt to a maximum of 5 minutes
+			- Cold Start
+				• First request served by new instances has higher latency than the rest, especially in VPCs & if the init(code, dependencies, SDK loading) is large 
+				• To avoid cold start
+					- provisioned concurrency with Application Auto Scaling to adjust capacity based on traffic with minimum required target utilization to save cost
+					- Avoid Unnecessary(if lambda doesn’t need to access private resources) VPC Configuration as due to ENI attachment, lambda in a VPC takes longer to start
 			- Easy monitoring through AWS CloudWatch & sheduled trigger setup using CloudWatch Events EventBridge
 			- Limited Runtimes - Node.js(JavaScript), Python, C#, Ruby, etc. as well as Custom Runtime API(community supported, example Rust or Golang) & containers image
+			Lambda SnapStart
+				- For new version published(Java, Python, .NET), lambda automatically initialize and snapshots memory, disk state and cached for low-latency access for function execution
+			- By default, your Lambda function is launched in an AWS-owned VPC, blocking access to AWS resources in your VPC
+				• to access AWS resources from your VPC; VPC ID, Subnets and Security Groups should be added on lambda to create an ENI in your subnets to access VPC resources
             AWS Step Function : build serverless visual workflow ro orchestrate lambda function
                 - Features; sequencing, parallel functions, confitions, timeouts, error handling, etc.
 			- Pricing : Pay per request and compute time
@@ -1853,6 +1946,19 @@ AWS Services
 				• 400,000 GB-seconds of compute time per month for FREE || After that $1.00 for 600,000 GB-seconds
 					that means, == 400,000 seconds if function is configured with 1GB RAM
 								== 3,200,000 seconds if function is configured with 128 MB RAM
+
+
+		AWS Glue(managed ETL)
+			- Managed serverless extract(from s3/RDS), transform, and load(in RedShift for Analytics) (ETL) service
+			- Useful to prepare and transform data for analytics
+			- default timeout 2 days, max timeout 7 days
+			- Glue Job Bookmarks : prevent re-processing old data
+			• Glue DataBrew : pre-built transformation to clean and normalize data
+			• Glue Studio : new GUI to create, run and monitor ETL jobs in Glue
+			• Glue Streaming ETL(built on Apache Spark Structured Streaming) : compatible with Kinesis Data Streaming, Kafka, MSK (managed Kafka)
+			AWS Glue Data Catalog
+				- central repository to store(fetched by AWS Glue Data Crawler) structural and operational metadata for all your data assets to be used by Glue, Athena, EMR
+				- For dataset, store its table definition, physical location, add business relevant attributes, as well as track how this data has changed over time
 
 
 		AWS Batch
@@ -1865,8 +1971,23 @@ AWS Services
 
 		AWS API Gateway
 			- Fully managed Serverless and scalable service to create, publish, maintain, monitor, and secure APIs
-			- Supports RESTful APIs and WebSocket APIs with security, user authentication, API throttling, API keys, monitoring
-			- Expose Lambda functions as HTTP API
+			- Supports RESTful APIs and WebSocket APIs with versioning, environments, security(user authentication/authorization), API throttling, API keys, monitoring
+			- Transform and validate requests and responses with API responses caching
+			- Swagger/Open API import/Export to quickly define APIs
+			- Integration with;
+				• Expose AWS service(Lambda functions) as HTTP API
+				• Expose HTTP endpoints(internal HTTP API on premise, Application Load Balancer) for rate limiting, caching, user authentications, API keys, etc.
+			- Allow HTTPS security through integration with AWS Certificate Manager(ACM)
+				• If using Edge-Optimized endpoint, then the certificate must be in us-east-1
+				• If using Regional endpoint, the certificate must be in the API Gateway region
+				• Must setup CNAME or A-alias record in Route 53 to point to your domain and API Gateway
+			- Endpoint Types;
+				• Edge-Optimized (default) : still lives in only one region, but Requests are routed through the CloudFront Edge locations (improves latency)
+				• Regional : for clients within same region, allowing manually combine with CloudFront to get more control over caching and distributing
+				• Private : accessed(allow access in resource policy) only from your VPC using an interface VPC endpoint(ENI)
+			Edge-Optimized API Gateway
+				- API requests are routed to the nearest CloudFront Edge Location for geographically distributed clients which improves latency
+				- The API Gateway still lives in one AWS Region.
 
 
 		AWS App Runner
@@ -1876,9 +1997,9 @@ AWS Services
 
 
         AWS Step Function : 
-            - build serverless visual workflow to orchestrate lambda function
-            - Features; sequencing, parallel functions, confitions, timeouts, error handling, human authentication(approval) etc.
-            - can integrate with; EC2 servers, ECS, On-premises servers, API Gateway, SQS queues, etc.
+            - build serverless visual workflow to orchestrate your function(generally Lambda)
+            - Features; sequencing, parallel functions, conditions, timeouts, error handling, human authentication(approval like MFA, Capcha, want to continue button), etc.
+            - can integrate with; EC2 instances, ECS, On-premises servers, API Gateway, SQS queues, etc.
             - use cases: order fulfillment, data processing, web applications, etc.
 
 
@@ -2078,6 +2199,10 @@ AWS Services
 						- Low-cost object storage meant for archiving/backup with pricing for storage + object retrieval cost
 						- Retrieval : Standard (12 hours), Bulk (48 hours)
 						- Minimum storage duration of 180 days
+                    
+                    8. S3 Express One Zone - for Directory Bucket
+                        - 10x better performance(1,00,000 req/sec) than S3 Standard with 50% lower cost, but single AZ 
+                        - Easy integration with Sagemaker, Athena, EMR, Glue, etc. for Latency sensitive apps, AI-ML apps, HPC, media processing, etc.
 
             S3 Lifecycle Rules
                 - shedule objects to change storage classes based on multiple Transition/Expiration(delete) Actions specified(prefix, tags, duration of storage, etc.)
@@ -2229,7 +2354,7 @@ AWS Services
 	DataBase (worloads with indexing and quering capability needs)
 		Relational Database	: tables(row + column)
 			AWS RDS(Relational Database Service) 
-				- Best for OLTP(Online Transaction Processing)
+				- Best for OLTP(Online Transaction Processing) and Joins
 				- RDS database engines support; Postgres, MySQL, MariaDB, Oracle, Microsoft SQL Server, IBM DB2, AWS Aurora
 				- AWS managed service with automated provisioning(vertical and horizontal scaling), optional backups(5 min freq, max 35 days retention) and restorable to specific point timestamp(5 min - 35 days)
 				- Storage leveraging EBS(as AWS managed DB also hosted on EC2 instance), with automatic storage scaling upto defined max storage threshold
@@ -2278,14 +2403,15 @@ AWS Services
 						- Outbound data transfer are tiered for volume discounts
 						- Inbound is free
 				- For stopped RDS database, user still have to pay for storage. Therefore instead of stopping unsable RDS-DB user should snapshot(cheaper) & restore as/when required
+				- RDS Proxy(only privately accessible in VPC); especially for Lambda function deployed in your VPC directly accessing RDS in Private Subnet of same VPC
 
 
 			AWS Aurora (RDS Aurora)
+				- Best for OLTP(Online Transaction Processing) and joins
 				- AWS cloud optimized Proprietary database with MySQL and PostgreSQL support
 				- Aurora is made for high availability, store 6 copies of the data across 3 AZ anytime data is written with Self Healing(with peer-to-peer replication)
 				- Storage grows automatically in increment of 10 GB, upto 128 TB, And storage is striped across 100s of volumes(EBS) supporting any point in time recovery
 				- Cost 20% more than RDS, but more efficient(cost effective) for cloud. Not available in free tier
-				- Best for OLTP(Online Transaction Processing)
 				- Max 15 cross region read replicas(excluding main/master DB) with faster auto scaling read replica as well as any of these read replica automatically becomes failover(instantly) in-case main DB fails
 				- Uses Writer Endpoint(Pointing to the master) & Reader Endpoint(Connection Load Balancing) at connection level suitable for replicas auto scaling and instant main DB failover
 				- Allows Custom Endpoints to define a subset of Aurora read instances to handle read traffic
@@ -2312,48 +2438,80 @@ AWS Services
 				Babelfish for Aurora PostgreSQL
 					- Allows Aurora PostgreSQL to translate commands(in T-SQL) targeted for MS SQL Server, therefore Microsoft SQL Server based applications can work on Aurora PostgreSQL
 					- The same applications can be used after a migration of your database(using AWS SCT and DMS)
-
-
-			AWS ElastiCache
-				- Managed in-memory caching capability Redis(highly available read replica) or Memcached(multi-node(sharded), best for multi-threading performance) for any(Relational/NoSQL) database
-				- high performance, low latency, user login session data management, reduce load out off databases for read intensive workloads
-                - Allows on-premise to create ElastiCache instances on an AWS Outpost
-                - IAM authentication for Redis(not ElastiCache) + Redis Auth(password/token with SSL in-flight encryption) implementing extra security
-                - ElastiCache Redis Sorted Set gurarantees both uniqueness and ordering(Each time a new element added, it’s ranked in real time, then added in correct order)
+			Note - Invoke Lambda functions from DB(RDS/Aurora) instance(not configurable using AWS console), for successful registration welcoming email sending, etc.
+				 - By allowing outbound traffic from DB(Public, NAT GW, VPC Endpoints) and invoking permission(Lambda Resource-based Policy & IAM Policy) for Lambda
 
 
 
 		NoSQL Database : key-value(JS Object Notation), document, graph, in-memory, search database
-			AWS DynamoDB(NoSQL)
+			AWS DynamoDB(NoSQL ~Json)
 				- Fully Managed NoSQL(key/value) distributed serverless DB
 				- Highly available(Millions of requests per seconds, trillions of row, 100s of TB of storage) with replication across 3 AZ
 				- Integrated with IAM for security, authorization and administration
 				- low cost and auto scaling capabilities with Standard & Infrequent Access (IA) Table Class for cost saving
 				- Table consists of Key-values;
-					- Primary key(Partition[mandatory] and/or Sort Key)
-					- zero or more Attributes without need of any defined schema(i.e. schema is defined per item)
+					• Primary key(Partition[mandatory] and/or Sort Key)
+					• zero(null) or more Attributes without need of any defined schema(i.e. schema is defined per item)
+					• Maximum size of an item is 400 KB
+					• Data Types;
+						- Scalar Types : String, Number, Binary, Boolean, Null
+						- Document Types : List, Map
+						- Set Types : String Set, Number Set, Binary Set
+				- Capacity Modes;
+					• Provisioned Mode(default) : Manage and optimize costs by allocating Read & Write Capacity Units(RCU/WCU) in advance but comparatively slow scalling than on-demand
+					• On-Demand Mode : Read/writes automatically swiftly scale up/down with your workloads with no capacity planning, 2x-3x more expensive than provisioned
+				- Stream Processing : process task on stream of item-level modifications(create/update/delete) in a table
+					• DynamoDB Streams
+						- 24 hours retention with limited number of consumers support
+						- Process using AWS Lambda Triggers or EC2 instace(using DynamoDB Stream Kinesis adapter)
+					• Kinesis Data Streams
+						- 1 year retention with high number of consumers support
+						- Intefrate with AWS Lambda, Redshift(analytics), s3(archiving), OpenSearch(indexing), AWS Glue Streaming ETL,  etc.
 				- Replication
-					- DynamoDB Global Tables : replicate data automatically across Regions and scale capacity to accommodate your workloads for distributed applications low latency read and write
-					- accessible with low latency in multiple-regions
-					- Active-Active(2-way) replication (read/write to any AWS Region)
-				DynamoDB Accelerator - DAX
-					- Fully Managed in-memory cached only for DynamoDB(i.e. different than ElastiCache which can be used for DynamoDB too)
+					• DynamoDB Global Tables : replicate data automatically across Regions for distributed applications low latency read-write, must enable DynamoDB Streams
+					• accessible with low latency in multiple-regions
+					• Active-Active(2-way) replication (read/write to any AWS Region)
+				- Backups for disaster recovery : Recovery process creates a new table
+					• Continuous backups using point-in-time recovery (PITR)
+						- Optionally enabled for the last 35 days
+						- Allows exporting/importing table to/from S3(without consuming any read/write capacity) allowing querying using Athena engine
+					• On-demand backups
+						- Full backups for long-term retention, until explicitely deleted without affecting performance or latency
+						- Can be configured and better managed in AWS Backup(enables cross-region copy)
+				- Time To Live(TTL) for DynamoDB item : Automatically delete items after an expiry timestamp, generally ussed for web session handling
+				- Allows capturing time-ordered sequence of item-level modifications in a DynamoDB table to create triggers to events in real-time only for AWS Lambda
+				DynamoDB Accelerator - DAX Cluster
+					- Fully Managed in-memory cached only for DynamoDB(different than ElastiCache which can be used for DynamoDB for storage of big-computation)
 					- 10x performance improvement
+					- default TTL of 5 mins, can be changed
 
 
-			AWS DocumentDB(NoSQL)
+			AWS ElastiCache(key-value pairs)
+				- Managed in-memory caching capability Redis(highly available read replica) or Memcached(multi-node(sharded), best for multi-threading performance) for any(Relational/NoSQL) database
+				- high performance, low latency, user login session data management, reduce load out off databases for read intensive workloads
+                - Allows on-premise to create ElastiCache instances on an AWS Outpost
+                - IAM authentication for Redis(not ElastiCache) + Redis Auth(password/token with SSL in-flight encryption) implementing extra security
+                - ElastiCache Redis Sorted Set gurarantees both uniqueness and ordering(Each time a new element added, it’s ranked in real time, then added in correct order)
+			
+			
+			AWS DocumentDB(For MongoDB)
 				- AWS cloud optimized Proprietary database with MongoDB(NoSQL) support
 				- Fully Managed, highly available with replication across 3 AZ
 				- Automatically Storage grows in increments of 10GB and workloads scales with millions of requests per seconds
 
 
-			AWS Neptune (Graph Database)
+			AWS Keyspaces(for Apache Cassandra)
+				- managed(traffic based auto scale tables up/down) Apache Cassandra-compatible(Cassandra Query Language) Serverless database service
+				- Use cases: store IoT devices info, time-series data
+
+
+			AWS Neptune(Graph Database)
 			 	- Fully managed graph database (graph dataset are highly connected like a social network; Users, Posts, Comments, likes from users, Users post shares, etc.)
 				- Optimized for complex and hard queries for highly connected dataset
 				- Store up to billions of relations
 
 
-			AWS Timestream (TimeSeries Database)
+			AWS Timestream(TimeSeries Database)
 				- Fully managed, fast, auto scalable(up/down to adjust capacity), serverless time series database
 				- Store and analyze trillions of events per day
 				- 1000s times faster & 1/10th the cost of relational databases
@@ -2373,17 +2531,9 @@ AWS Services
 				- Managed Hyperledger Fabric & Ethereum blockchain
 
 
-			AWS Glue(managed ETL)
-				- Managed serverless extract(from s3/RDS), transform, and load(in RedShift for Analytics) (ETL) service
-				- Useful to prepare and transform data for analytics
-				- default timeout 2 days, max timeout 7 days
-				AWS Glue Data Catalog 
-					- central repository to store structural and operational metadata for all your data assets
-					- For dataset, store its table definition, physical location, add business relevant attributes, as well as track how this data has changed over time
-
 
 		Big Data, Data Processing
-			AWS Redshift
+			AWS Redshift(OLAP)
 				- PostgreSQL based, OLAP(Online Analytical Processing and data Warehousing) database
 				- Load data once every hour(not every second) with 10x better performance than other data warehouses, scale to PBs of data
 				- Columnar storage of data (instead of row based)
@@ -2404,23 +2554,34 @@ AWS Services
 				- Use cases: data processing, machine learning, web indexing, big data, etc.
 
 
-			AWS Athena 
+			AWS Athena(S3 data)
 				- analyze data stored in S3 using serverless SQL to query the files
 				- Supports CSV, JSON, ORC, Avro, and Parquet (built on Presto)
 				- Pricing: $5.00 per TB of data scanned
 				- Use compressed or columnar data for cost-savings (less scan)
-				- Use cases: Business intelligence/analytics/reporting, analyze & query VPC Flow Logs, ELB Logs, CloudTrail trails, etc.
+				- Use cases: Business-intelligence/analytics/reporting, analyze & query VPC Flow Logs, ELB Logs, CloudTrail trails, etc.
 
 
 			AWS QuickSight
-				- Serverless machine learning-powered business intelligence service to create interactive dashboards out of data
+				- Serverless machine learning-powered business-intelligence service to create interactive dashboards(published shareable read-only snapshots) out of data
 				- Fast, automatically scalable, embeddable, with per-session pricing
 				- Use cases:
 					• Business analytics
 					• Building visualizations
 					• Perform ad-hoc analysis
 					• Get business insights using data
-				- Integrated with RDS, Aurora, Athena, Redshift, S3, etc.
+				- Integrated with RDS, Aurora, Athena, Redshift, S3, and many 3rd party SaaS(Jira, Salesforce, etc.) or on-premise dataBase, etc.
+				- In-memory computation using SPICE engine if data is imported into QuickSight(csv, excel, json, tsv) rather than using external data source(RDS)
+				- Allow management of QuickSight specific users(standard version) & user groups(enterprise version) for dashboards to share with, not IAM users	 
+				- provieds Enterprise edition of QuickSight which allows to setup Column-Level security(CLS), i.e. show/hide partial visuals to users based on users & user groups
+
+
+
+
+		Search Optimization
+			OpenSearch (JSON)
+				- Free Text, unstructured Searches
+
 
 
 		AWS DMS(Database Migration Service)

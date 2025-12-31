@@ -11,5 +11,5 @@ end
 callback
 
 Reason:
-callback function will gets from callback-queue to call-stack by event-loop only after call-stack is empty(GEC pops off)
+callback() will gets from callback-queue to call-stack by event-loop only after call-stack is empty(GEC pops off)
 */

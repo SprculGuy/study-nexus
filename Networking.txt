@@ -80,7 +80,7 @@ OSI Model									TCP/IP Model
 
 
 DNS(Domain Name Server)
-    - special kind of Server with stored domain name and address mapping
+    - special kind of Server with stored domain name and IP address mapping
 	Terminologies
 		- Domain Registrar : AWS Route53, GoDaddy, etc.
 		- DNS Record : A, AAAA, CNAME(Canonical Name), NS(NameServer), CAA, DS, MX, NAPTR, PTR, SOA, TXT, SPF, SRV, etc.
@@ -195,3 +195,30 @@ API(Application Programming Interface)
 		2. Partner - for selected Bussiness/Partner after usage varification by charging some ammount
 		3. Public - 3rd party
 
+
+
+CIDR(Classless Inter-Domain Routing) : a method for allocating IP addresses
+    - consists of two components 
+        • Base IP
+            - Represents an IP contained in the range (XX.XX.XX.XX)
+            - Example: 10.0.0.0, 192.168.0.0, etc.
+        • Subnet Mask
+            - Defines how many bits can change in the IP
+            - Example;
+                • /0 : 0.0.0.0         		192.168.0.0/0 	=>     0.0.0.0 - 255.255.255.255	all IPs
+                • /1 : 0.0.0.0         		192.168.0.0/1 	=>   128.0.0.0 - 254.255.255.255	2,147,483,648 IPs
+                • /8 : 255.0.0.0 			192.168.0.0/8 	=> 	 192.0.0.0 - 192.255.255.255	16,777,216 IPs
+                • /16 : 255.255.0.0    		192.168.0.0/16 	=> 192.168.0.0 - 192.168.255.255	65,536 IPs
+                • /24 : 255.255.255.0 		192.168.0.0/24 	=> 192.168.0.0 - 192.168.0.255		256 IPs
+                • /31 : 255.255.255.0 		192.168.0.0/31 	=> 192.168.0.0 & 192.168.0.1		2 IPs
+                • /32 : 255.255.255.255		192.168.0.0/32 	=> 		  192.168.0.0				1 IP
+
+
+
+Internet Assigned Numbers Authority(IANA) 	
+	- defined certain blocks of IPv4 addresses for the use of private(LAN) and public(Internet) addresses
+		• Private IP can only allow certain values:
+		• 10.0.0.0 – 10.255.255.255 (10.0.0.0/8) 			; in big networks
+		• 172.16.0.0 – 172.31.255.255 (172.16.0.0/12) 		; AWS default VPC in that range
+		• 192.168.0.0 – 192.168.255.255 (192.168.0.0/16) 	; home networks
+	- All the rest of the IP addresses on the Internet are Public

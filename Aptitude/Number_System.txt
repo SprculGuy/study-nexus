@@ -1,0 +1,21 @@
+
+** Classification of Numbers:
+
+	A. Real Numbers
+		a. Irrational Numbers - e.g. ∛7, π, e, etc.
+		b. Rational Numbers
+			1. Integer
+				I. Negative integers
+				II. Whole Integer Numbers(n)
+						a. Even Numbers - Including zero. (2n) e.g. 0, 2, 4, 6, etc.
+					i. Zero
+					ii. Natural Integer Numbers
+						b. Odd Numbers - (2n ± 1)
+							i. Prime Numners - Natural number only divisible by 1 & itself,i.e. only have 2 factors. e.g. 2(only even), 3, 5, 7, 11, etc.
+						d. Composite Numbers - 
+			2. Fractions(p/q)
+			3. Decimals
+				I. Ternimated Decimals - 1.5
+				II. Reapeated Decimals - 3.333...
+	B. Complex Numbers - combination(a + ib) of real and imaginary(...; i⁻³=i; i⁻²=-1; i⁻¹=-i; i⁰=1 ←◘→ i=√-1; i²=-1; i³=-i; i⁴=1; ...)
+

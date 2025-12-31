@@ -1,0 +1,30 @@
+{1} The Fundamental Unit of Life - Cell
+	[A] Intro  
+		- Derived from Latin word Cellula(small room)
+		- Every living organism is made up of this tiny microscopic unit
+
+
+	[B] Types of cellular organisms 
+		(a) Uni-cellular 
+			- All functional and structural properties are provided by only single cell
+			- Simple structure; Amoeba, Bacteria, Paramecium
+
+		(b) Multi-cellular 
+			- Multi cellular parts(organs) formed and divided to do perticular vital function
+			- Complex structure; Plants & Animals
+
+		(c) Prokaryotic cell
+			- small(1-10 μm) simple, single-celled organism lack a nucleus and other membrane-bound organelles, such as mitochondria
+			- Genetic material(DNA) is located in a region of the cytoplasm called the nucleoid, not enclosed by a membrane
+			- earliest forms of life on Earth essential for decomposition; includes bacteria and archaea domains of life
+
+		(d) Eukaryotic
+			- membrane-bound nucleus present that contains the cell's DNA, and other membrane-bound organelles like mitochondria and chloroplasts
+
+
+	[C] Structure of cell
+		(a) Cell membrane (plants + animals)
+		(b) Cell wall (Only plants)
+		(c) Nucleus
+		(d) Cytoplasm
+		(e) Cell organelles

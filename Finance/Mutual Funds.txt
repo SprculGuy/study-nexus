@@ -1,0 +1,83 @@
+
+Mutual Funds : 
+        A mutual fund is a company that pools money from many investors and invests the money in securities 
+            such as stocks, bonds, and short-term debt as per the objectives of schemes. 
+        Managed by the Mutual Fund Manager.
+
+    Types of MF scheme -
+        By Structure - 
+            Open-Ended - Investor can enter any time
+            Close-Ended - Investor only enter and leave at scheme specified time
+            Interval - open every 2 days for 1 months to get out/in existing investors, and gets locked for 2 months.
+        
+        
+        By Nature
+            Index - highest risk
+            
+            Equity - Equity funds invests in shares of companies and related securities like derivatives[i.e. futures, options] which trade in the stock market.
+                        Equity is more volatile asset class compared to debt.
+                        High risk appetites with longer investment tenures for equity funds investments.
+                        LTCG 10% for capital gain on remaining value after 1 lac
+                        STCG 15% on capital gain
+                    Large cap - min 80% money is invested in top 100 companies(according to their market capitalization)
+                    Mid cap - min 65% money is invested in top 101-250 companies(according to their market capitalization)
+                    Small cap - min 865% money is invested below top 250 companies(according to their market capitalization)
+                    Multi cap
+                    Dividend yield
+                    value
+                    Contra
+                    Thematic/Sectoral
+                    ELSS
+                    Focused
+            
+            Debt - Debt funds invests in debt and money market instruments[ie. commercial papers (CPs), certificates of
+                        deposits(CDs), Treasury bills(T-Bills), non convertible debentures(NCDs), Government Bonds or G-Secs etc.]
+                        LTCG use Indexation for lower the tax
+                        STCG up-till 3 years
+                Liquid debt funds/Money Market Schemes - most safe, low duration(Suitable for putting money aside for emergencies)
+            
+            Balance/Hybrid - mix of debt, equity, gold, etc. asset class
+            
+            Tax Saving - 
+                ELSS(Equity Linked Savings Scheme) - 3 years lock-in period
+                Tax Saving FD - 5 years lock-in period
+                PPF(Public Provident Fund) - 15 year maturity period
+                ULIP
+
+
+
+ETF (Exchange treaded fund) - MF is traded on stock exchange
+
+
+
+Portfolio : 
+    The combined holdings of the particular mutual fund in all asset classes is known as portfolio.
+    
+NAV(Net Asset Value):
+    Market value of one unit entire mf in portfolio
+
+NFO(New Fund Offer): 
+    same as IPO but for MF
+
+Exit Load:
+    charged if exited in lock in period
+
+Expense Ratio:
+    should be max 2.5%(Equity Oriented) or 2.25%(Debt Oriented)
+
+Fact Sheet:
+    available monthly on respective the companies website
+
+Indexation:(For Debt Oriented MF)
+    to save the LTCG tax on redemption with the use increasing the cost of purchase according to cost inflation index(CII)
+    for Indexation, you must be locked in for 3 financial years
+
+SIP(systematic investment plan): [bank > equity mutual fund]
+    investors to invest in mutual funds a fixed amount at regular intervals
+
+STP(Systematic Transfer Plan): [debt mutual fund > equity mutual fund]
+    STP allows investors to transfer investments between mutual funds
+    frequency -> weekly, fortnightly, Monthly, Quarterly
+
+SWP(Systematic Withdrawal Plan): 
+    investors to withdraw a fixed amount at regular intervals

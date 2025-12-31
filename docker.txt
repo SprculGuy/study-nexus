@@ -1,7 +1,7 @@
 ** DOCKER -  
 		Software development platform to deploy apps which are packaged in containers that can be run on any OS regardless of where they’re run
-		Docker virtualizes operating systems kernel(software), where as virtual machines virtualizes entire hardware
-		Docker simplifies the deployment process, promotes consistency across different environments, and enhances scalability by isolating applications into containers.
+		Docker virtualizes only the host OS kernel, so containers must be compatible with the host OS. Whereas, VMs emulate entire hardware using hyperviser software, allowing independent OS
+		Docker simplifies the deployment process, promotes consistency across different environments, and enhances scalability by isolating applications into containers
 
 
 ** Key components of Docker include:

@@ -46,7 +46,7 @@ const asyncFunc = async function() {
 		throw err;   // reject() promise returned from asyncFunc
 	}//finally(){}
 };
-// asyncFunc().then(data=>console.log(data)).catch(err=>console.error(err))//.finally(()=>loading_cursor.style.display = None)
+asyncFunc().then(data=>console.log(data)).catch(err=>console.error(err))//.finally(()=>loading_cursor.style.display = None)
 
 (async function() {                                  // <script src="js/asynchronous.js" defer> </script>
 	try {                                            // if this code gives error try force reload - Ctrl + Shift + R
@@ -57,7 +57,7 @@ const asyncFunc = async function() {
 	}
 })();
 
-// top-level await is synchronous(blocks the module code execution)
+// top-level(only inside module) await is synchronous(blocks the module code execution)
 // try{                                             // <script type="module" src="js/asynchronous.js" defer> </script>
 //     const res = await asyncFunc()                    // as, await is only valid in async functions and the top-level bodies of modules
 //     console.log(res);

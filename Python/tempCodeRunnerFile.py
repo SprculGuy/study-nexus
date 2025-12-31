@@ -1,12 +1,4 @@
-def
-# shoppingList(cls, input1, input2, input3, inputa, inputs, input6):
-# input1 : int
-# input2 : int
-# input3 : int
-# input4 : string[]
-# Inputs : string[]
-# input6 : string[]l
-# Expected return sype
-# : string[]
-# * Read only region endi
-# # Wre code heroi
+=0
+# i=2 (5): j=3 (3). 3 < 5? Yes. starvation[2] = 3-2 = 1
+# i=1 (2): j=3 (3), j=2 (5). None < 2. starvation[1] = 0
+# i=0 (8): j=3 (3). 3 < 8? Yes. st

@@ -1,0 +1,50 @@
+In the context of cloud computing; Cloud refers to the group of computers in the network
+
+
+
+Types of cloud services
+    public 	- Owned and operated by provider(AWS, Microsoft Azure, GCP) of cloud services over the internet based on Pay-as-you-go pricing model.
+    private - Single organization that work on private infrastructure(on-premises or hosted by a third-party provider); suitable for high security and compliance requirements.
+    hybrid 	- Combines public and private cloud infrastructures by providing flexibility and scalability while maintaining control over sensitive data.
+
+
+
+Types of cloud computing services model
+	On-premises >                                                                                   		 - Everything is managed by us
+	IAAS        >                                        		  Virtualization|Servers|Storage|Networking  - Managed by cloud; AWS EC2
+	CAAS		>									  		   OS|Virtualization|Servers|Storage|Networking  - Managed by cloud; AWS ECS
+	PAAS        >                  			Runtime|Middleware|OS|Virtualization|Servers|Storage|Networking  - Managed by cloud; AWS Elastic Beanstalk
+	SAAS        > 		   Application|Data|Runtime|Middleware|OS|Virtualization|Servers|Storage|Networking  - Managed by cloud; AWS Rekognition for ML
+	FAAS        > Function|Application|Data|Runtime|Middleware|OS|Virtualization|Servers|Storage|Networking  - Everything is managed by cloud; AWS Lambda
+
+
+
+Shared Responsibility Model
+    Cloud Service Providers Responsibility - Security of the Cloud
+        - Infrastructure(Global Network(data centers) Security) - patching and fixing flaws within the infrastructure
+        - Isolation on physical hosts(for dedicated hosts)
+        - Replacing faulty hardware, OS maintenance/patching,, Optimizations, Backup & Replication for managed services like, S3, dynamodb, RDS, etc.
+        - compliance validation(regulations)
+ 
+    Users/Customer Responsibility - Security in the Cloud
+        - Security Groups rules, firewall & network configuration
+        - Guest OS, application patches and updates of software & utilities installed
+        - IAM roles assignment & user access management
+        - Encryption of application data(client-side as well as server-side)
+        - data Backup(snapshot) & Replication procedure
+
+	Shared Responsibility - 
+		- Patch Management
+		- Configuration Management
+		- Awareness & Training
+
+
+
+A cloud provider which provides you with services and servers that you can use on demand and scale easily
+    some of the biggest websites hosted on AWS 
+        1. amazon.com
+        2. netflix 
+
+
+
+Note - Serverless doesn't mean absence of servers but it means the developers don’t have to manage servers anymore, developers only need to deploy code/functions

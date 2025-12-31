@@ -53,10 +53,12 @@ Execution-->
 
 
 
-SPECIAL VARIABLE--
-	-> Used to run default code only from current module
-__name__		# __name__ = '__main__' for static point of execution for current working module
-				# For imported module __name__ holds 'module_name' as static point of execution from which it accessed...
+SPECIAL VARIABLE--	
+	__name__	-> Used to distinguishing between imported module and current module
+				# __name__ = "__main__" for static point of execution for current working module
+				# For imported module __name__ holds "module_name" as static point of execution from which it accessed...
+
+	"__main__"	-> value of top level environment or current module(code execution)
 
 
 
@@ -121,10 +123,12 @@ Note-->
 	list.count(item)
 	sum(list)
 
-	zip(list1, list2)  # returns list of tuples with n element of both list1 and list2
 	list.sort(key = lambda x:x["TotalMarks"], reverse=True)        	# sorts list, returns None
 	sorted(list, key = x:x["TotalMarks"], reverse = True)       	# returns sorted copy of list
 	",".join(list)     # returns a string with list elements separated by comma
+	list(zip(list1, list2))  										# returns list of tuples with n element of both list; if len(list2) > (len(list1) = n) 
+	import itertools
+	list(itertools.zip_longest(list1, list2, fillvalue="na"))		# returns list of tuples with n element of both list; if len(list2) < (len(list1) = n), blank values filled with "na" or default None
 
 
 
@@ -357,12 +361,12 @@ Note-->
 
 
 **MODULES--
-	We can use .py files/modules created in working directory
+	Self-contained(.py files) software units which can be re-used, executed independantly, easily identified between other units
   examples-
-	import module
-	import module as obj
+	import module											// importing module will execute code defined in top level environment of that module
+	import module as alias
 	from module import method								method can be Function, Class...
-	from module import method as obj
+	from module import method as alias
 	from module import method1, method2
 	from module import *
 	
@@ -374,9 +378,9 @@ Note-->
 	import package														> package.module.method()
 	import package.module												> module.method()
 	import package.sub-package.module									> module.method()
-	import package.module as obj										> obj.method()
-	from package.module import method_class as obj						> obj()
-	from package.sub-package.module import method_class as obj			> obj()
+	import package.module as alias										> alias.method()
+	from package.module import method_class as alias					> alias()
+	from package.sub-package.module import method_class as alias		> alias()
 
 Note -> Modules are by default searched in 'sys.path' list of directories by the python compiler
 		sys.path list has first item of list is current working directory
@@ -496,12 +500,12 @@ ways to implement polymorphism in python
 
 
 **CONTEXT-MANAGER PROTOCOL--
-	with expression as obj, expression1 as obj1, expression2 as obj2:				# expression is termed as context-manager, which returns an object
+	with expression as alias, expression1 as alias1, expression2 as alias2:				# expression is termed as context-manager, which returns an object
 		_block_
 	
-	with expression as obj:
-		with expression1 as obj1
-			with expression2 as obj2:				
+	with expression as alias:
+		with expression1 as alias1
+			with expression2 as alias2:				
 				_block_
 
 
@@ -557,3 +561,12 @@ ways to implement polymorphism in python
 **GENERATOR - 
 **ITERATOR	- python object that allows you to traverse through a collection, one element at a time
 **ITERABLE	- any object that you can loop over. Iterables can produce iterators using - iter()
+	import itertools
+	l1 = [1,2,3,4]
+	l2 = ["a","b","c"]
+	l3 = [i, ii, iii, iv, v]
+
+	list(zip_longest(l1,l2))							>[(1, 'a'), (2, 'b'), (3, 'c'), (4, None)]
+	list(zip_longest(l1,l2, fillvalue="na"))			>[(1, 'a'), (2, 'b'), (3, 'c'), (4, 'na')]
+	for i in itertools.chain(l1,l2,l3):
+		print(i, end=" ")				   				>1 2 3 4 a b c i ii iii iv v 
